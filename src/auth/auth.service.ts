@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from 'src/dto/create-user.dto';
@@ -35,7 +39,7 @@ export class AuthService {
       throw new UnauthorizedException('invalid credentials');
     }
 
-    if (user.password !== payload.password) {
+    if (!(await bcrypt.compare(payload.password, user.password))) {
       throw new UnauthorizedException('invalid credentials');
     }
 
