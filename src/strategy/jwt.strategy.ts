@@ -1,11 +1,11 @@
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(private readonly userService: AuthService) {
+  constructor() {
     super({
       jwtFromRequest: (req) => {
         var token = null;
@@ -14,18 +14,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         }
         return token;
       },
-      ignoreExpiration: true,
-      //secretOrKey: 'yo',
+      ignoreExpiration: false,
       secretOrKey: process.env.ACCESS_SECRET,
     });
   }
 
   async validate(payload: any) {
     //tuki lahka kličeš bazo da pošlješ dodatne info o uporabniku, ki niso v paylodou
-    console.log(payload);
     return {
-      id: payload.userId,
-      username: payload.username,
+      id: payload.id,
+      email: payload.email,
     };
   }
 }

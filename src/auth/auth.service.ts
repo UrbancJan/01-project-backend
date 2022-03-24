@@ -57,10 +57,10 @@ export class AuthService {
     return tempToken;
   }
 
-  async signUser(userId: number, username: string) {
+  async signUser(id: number, email: string) {
     return this.jwtService.signAsync({
-      userId,
-      username,
+      id,
+      email,
     });
   }
 }
