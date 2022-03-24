@@ -19,6 +19,15 @@ export class AuthService {
   ) {}
 
   async signup(payload: CreateUserDto): Promise<User> {
+    //pogledamo če uporabnik že obstaja
+    const userExists = await this.userRepository.findOne({
+      email: payload.email,
+    });
+
+    if (userExists) {
+      throw new BadRequestException('User already exists');
+    }
+
     const saltOrRounds = 10;
     const password = payload.password;
     const hashedPassword = await bcrypt.hash(password, saltOrRounds);
