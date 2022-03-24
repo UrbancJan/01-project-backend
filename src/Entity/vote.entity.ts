@@ -5,7 +5,7 @@ import { Quote } from './quote.entity';
 @Entity({ name: 'votes' }) //ime tabele v bazi
 export class Vote {
   @PrimaryGeneratedColumn()
-  public user_quoteId!: number;
+  public user_quote_Id!: number;
 
   @Column()
   public userId!: number;
