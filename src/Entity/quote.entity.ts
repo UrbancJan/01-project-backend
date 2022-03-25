@@ -16,6 +16,9 @@ export class Quote {
   @Column()
   content: string;
 
-  @OneToOne(() => User, (user) => user.quote, { onDelete: 'CASCADE' })
+  @Column()
+  votes: number;
+
+  @OneToOne(() => User, (user) => user.quote)
   user: User;
 }

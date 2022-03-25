@@ -24,7 +24,12 @@ export class UserService {
   async createQuote(payload: NewQuoteDto, userId: number): Promise<string> {
     const quote = new Quote();
     quote.content = payload.content;
-    const data = await this.quoteRepository.save(quote);
+    quote.votes = 0;
+    const newQuote = await this.quoteRepository.save(quote);
+
+    const user = await this.userRepository.findOne({ id: userId });
+    user.quote = quote;
+    const data = await this.userRepository.save(user);
 
     return 'OK';
   }
