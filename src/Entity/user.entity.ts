@@ -1,5 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Vote } from './vote.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToMany,
+  JoinTable,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
+import { Quote } from './quote.entity';
 
 @Entity({ name: 'users' }) //ime tabele v bazi
 export class User {
@@ -18,6 +27,7 @@ export class User {
   @Column()
   password: string;
 
-  @OneToMany(() => Vote, (vote) => vote.user)
-  public vote!: Vote[];
+  @OneToOne(() => Quote, (quote) => quote.user)
+  @JoinColumn()
+  quote: Quote;
 }

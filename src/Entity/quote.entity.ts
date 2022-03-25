@@ -1,5 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Vote } from './vote.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToMany,
+  OneToOne,
+} from 'typeorm';
+import { User } from './user.entity';
 
 @Entity({ name: 'quotes' }) //ime tabele v bazi
 export class Quote {
@@ -9,6 +16,6 @@ export class Quote {
   @Column()
   content: string;
 
-  @OneToMany(() => Vote, (vote) => vote.quote)
-  public vote!: Vote[];
+  @OneToOne(() => User, (user) => user.quote, { onDelete: 'CASCADE' })
+  user: User;
 }
