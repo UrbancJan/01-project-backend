@@ -34,4 +34,10 @@ export class UserController {
   upvote(@Param('id') id: number) {
     return this.userService.upvote(id);
   }
+
+  @UseGuards(jwtAuthGuard)
+  @Post('user/:id/downvote')
+  downvote(@Param('id') id: number) {
+    return this.userService.downvote(id);
+  }
 }

@@ -54,10 +54,19 @@ export class UserService {
 
   async upvote(id: number) {
     //id == userId
-    //returnat more stevilo votov
-
     const upvoteQuery =
       'Update quotes set votes = votes + 1 where id=(select users.quote_id from users where id=' +
+      id +
+      ') returning quotes.votes';
+
+    const votes = await this.quoteRepository.query(upvoteQuery);
+    return votes[0][0].votes;
+  }
+
+  async downvote(id: number) {
+    //id == userId
+    const upvoteQuery =
+      'Update quotes set votes = votes - 1 where id=(select users.quote_id from users where id=' +
       id +
       ') returning quotes.votes';
 
