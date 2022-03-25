@@ -27,7 +27,12 @@ export class User {
   @Column()
   password: string;
 
+  @Column({
+    nullable: true,
+  })
+  quote_id: number;
+
   @OneToOne(() => Quote, (quote) => quote.user)
-  @JoinColumn()
+  @JoinColumn({ name: 'quote_id' })
   quote: Quote;
 }

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { NewQuoteDto } from 'src/dto/new-quote.dto';
 import { Quote } from 'src/Entity/quote.entity';
 import { User } from 'src/Entity/user.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 
 @Injectable()
 export class UserService {
@@ -22,15 +22,30 @@ export class UserService {
   }
 
   async createQuote(payload: NewQuoteDto, userId: number): Promise<string> {
-    const quote = new Quote();
-    quote.content = payload.content;
-    quote.votes = 0;
-    const newQuote = await this.quoteRepository.save(quote);
+    //najprej pogleda, če ima uporabnik ze quote
+    const user = await this.userRepository
+      .createQueryBuilder()
+      .select('user')
+      .from(User, 'user')
+      .where('user.id=:id', { id: userId })
+      .getOne();
 
-    const user = await this.userRepository.findOne({ id: userId });
-    user.quote = quote;
-    const data = await this.userRepository.save(user);
+    if (user.quote_id == null) {
+      //uporabnik še nima dodanega quota
+      const quote = new Quote();
+      quote.content = payload.content;
+      quote.votes = 0;
+      const newQuote = await this.quoteRepository.save(quote);
 
+      user.quote = quote;
+      const data = await this.userRepository.save(user);
+    } else {
+      //uporabnik je posodobil quote
+      const quote = await this.quoteRepository.findOne({ id: user.quote_id });
+      quote.content = payload.content;
+
+      const updatedQuote = await this.quoteRepository.save(quote);
+    }
     return 'OK';
   }
 

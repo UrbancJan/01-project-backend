@@ -23,4 +23,10 @@ export class AuthController {
     // return this.userService.login(body);
     return { msg: 'success' };
   }
+
+  @Post('logout')
+  logout(@Res({ passthrough: true }) response: Response) {
+    response.clearCookie('jwt');
+    return { msg: 'success' };
+  }
 }
