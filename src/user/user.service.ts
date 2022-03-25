@@ -21,7 +21,10 @@ export class UserService {
     return result;
   }
 
-  async createQuote(payload: NewQuoteDto, userId: number): Promise<string> {
+  async createUpdateQuote(
+    payload: NewQuoteDto,
+    userId: number,
+  ): Promise<string> {
     //najprej pogleda, če ima uporabnik ze quote
     const user = await this.userRepository
       .createQueryBuilder()
@@ -49,15 +52,16 @@ export class UserService {
     return 'OK';
   }
 
-  async updateQuote(payload: NewQuoteDto, userId: number): Promise<string> {
-    //todo najdi id od quota
+  async upvote(id: number) {
+    //id == userId
+    //returnat more stevilo votov
 
-    const quote = new Quote();
-    quote.content = payload.content;
-    const data = await this.quoteRepository.save(quote);
+    const upvoteQuery =
+      'Update quotes set votes = votes + 1 where id=(select users.quote_id from users where id=' +
+      id +
+      ') returning quotes.votes';
 
-    return 'UPDATED';
+    const votes = await this.quoteRepository.query(upvoteQuery);
+    return votes[0][0].votes;
   }
-
-  //todo funckija za GET quota
 }

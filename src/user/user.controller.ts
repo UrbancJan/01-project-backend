@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Put,
   Req,
@@ -25,12 +26,12 @@ export class UserController {
   @UseGuards(jwtAuthGuard)
   @Post('myquote')
   myquote(@Body() createQoute: NewQuoteDto, @Req() request) {
-    return this.userService.createQuote(createQoute, request.user.id);
+    return this.userService.createUpdateQuote(createQoute, request.user.id);
   }
 
   @UseGuards(jwtAuthGuard)
-  @Put('myquote')
-  myquoteUpdate(@Body() updateQoute: NewQuoteDto, @Req() request) {
-    return this.userService.updateQuote(updateQoute, request.user.id);
+  @Post('user/:id/upvote')
+  upvote(@Param('id') id: number) {
+    return this.userService.upvote(id);
   }
 }
