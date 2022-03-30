@@ -48,4 +48,14 @@ export class UserController {
     const data = this.userService.updatePassword(request.user.id, newPassword);
     return data;
   }
+
+  @Get('user/:id')
+  usersInfo(@Param('id') id: number) {
+    return this.userService.usersInfo(id);
+  }
+
+  @Get('list')
+  list() {
+    return this.userService.list();
+  }
 }

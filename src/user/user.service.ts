@@ -149,4 +149,19 @@ export class UserService {
     const { password, ...result } = user;
     return result;
   }
+
+  async usersInfo(userId: number) {
+    const user = await this.userRepository.findOne(userId, {
+      relations: ['quote'],
+    });
+
+    //pogledamo če uporabnik obstaja
+    if (!user) {
+      throw new NotFoundException('User does not exist');
+    }
+
+    return user;
+  }
+
+  async list() {}
 }
