@@ -206,5 +206,13 @@ export class UserService {
     return user;
   }
 
-  async list() {}
+  async list(): Promise<User[]> {
+    const user = await this.userRepository
+      .createQueryBuilder('users')
+      .leftJoinAndSelect('users.quote', 'id')
+      .orderBy('votes', 'DESC')
+      .getMany();
+
+    return user;
+  }
 }
