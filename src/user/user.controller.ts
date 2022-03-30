@@ -11,6 +11,7 @@ import {
 import { jwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { NewQuoteDto } from 'src/dto/new-quote.dto';
 import { UserService } from './user.service';
+import { NewPasswordDto } from 'src/dto/new-password.dto';
 
 @Controller('')
 export class UserController {
@@ -39,5 +40,12 @@ export class UserController {
   @Post('user/:id/downvote')
   downvote(@Param('id') id: number) {
     return this.userService.downvote(id);
+  }
+
+  @UseGuards(jwtAuthGuard)
+  @Put('me/update-password')
+  updatePassword(@Req() request, @Body() newPassword: NewPasswordDto) {
+    const data = this.userService.updatePassword(request.user.id, newPassword);
+    return data;
   }
 }

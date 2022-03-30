@@ -4,10 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { NewPasswordDto } from 'src/dto/new-password.dto';
 import { NewQuoteDto } from 'src/dto/new-quote.dto';
 import { Quote } from 'src/Entity/quote.entity';
 import { User } from 'src/Entity/user.entity';
 import { IsNull, Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -113,5 +115,38 @@ export class UserService {
     const newValue = await this.quoteRepository.save(quote);
 
     return newValue.votes;
+  }
+
+  async updatePassword(
+    userId: number,
+    newPassword: NewPasswordDto,
+  ): Promise<any> {
+    const user = await this.userRepository.findOne({ id: userId });
+
+    //pogledamo če uporabnik obstaja
+    if (!user) {
+      throw new NotFoundException('User does not exist');
+    }
+
+    //pogledamo, če je staro geslo enako kot novo geslo
+    if (await bcrypt.compare(newPassword.password, user.password)) {
+      throw new BadRequestException(
+        'New password can not be the same as the old one!',
+      );
+    }
+
+    const saltOrRounds = 10;
+    const hashedPassword = await bcrypt.hash(
+      newPassword.password,
+      saltOrRounds,
+    );
+
+    //user objektu nastavimo novo geslo in ga shranimo v bazo
+    user.password = hashedPassword;
+    await this.userRepository.save(user);
+
+    //iz objekta odstranimo geslo da ne vračamo gesla uporabniku na client
+    const { password, ...result } = user;
+    return result;
   }
 }
