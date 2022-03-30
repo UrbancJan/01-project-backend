@@ -63,4 +63,13 @@ export class AuthService {
       email,
     });
   }
+
+  async isUserLoggedIn(payload: string): Promise<boolean> {
+    try {
+      const verify = await this.jwtService.verifyAsync(payload);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }
