@@ -10,6 +10,7 @@ import { Quote } from 'src/Entity/quote.entity';
 import { User } from 'src/Entity/user.entity';
 import { IsNull, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { Vote } from 'src/Entity/vote.entity';
 
 @Injectable()
 export class UserService {
@@ -17,6 +18,7 @@ export class UserService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(Quote)
     private readonly quoteRepository: Repository<Quote>,
+    @InjectRepository(Vote) private readonly voteRepository: Repository<Vote>,
   ) {}
 
   async me(userId: number): Promise<any> {
@@ -61,7 +63,7 @@ export class UserService {
     });
   }
 
-  async upvote(userId: number): Promise<Number> {
+  async upvote(loggedInUserId: number, userId: number): Promise<Number> {
     const user = await this.userRepository.findOne(userId, {
       relations: ['quote'],
     });
@@ -76,12 +78,34 @@ export class UserService {
       throw new BadRequestException('User does not have a quote');
     }
 
+    //najdemo quote in dodamo +1
     const quote = await this.quoteRepository.findOne({
       id: user.quote_id,
     });
     quote.votes = quote.votes + 1;
-    const newValue = await this.quoteRepository.save(quote);
 
+    //pogledamo če je prijavljen uporabnik že glasoval ne temu quotu
+    //state=1 => upvote / state=2 => downvote / state=undefined => ni se oddal glasu
+    //const vote = new Vote();
+    const state = await this.voteRepository.findOne({ id: loggedInUserId });
+
+    if (!state) {
+      //uporabnik še ni glasoval
+      state.user_id = loggedInUserId;
+      state.state = 1;
+      state.quote = quote;
+    } else if (state.state === 1) {
+      //uporabnik je že upvotu
+      throw new BadRequestException('You have already voted on this quote');
+    } else if (state.state === 2) {
+      //uporabnik je downvotu in sedaj želi upvotat
+      state.user_id = loggedInUserId;
+      state.state = 1;
+      state.quote = quote;
+    }
+
+    await this.voteRepository.save(state);
+    const newValue = await this.quoteRepository.save(quote);
     return newValue.votes;
 
     /* const upvoteQuery =
@@ -93,7 +117,7 @@ export class UserService {
     return votes[0][0].votes;*/
   }
 
-  async downvote(userId: number) {
+  async downvote(loggedInUserId: number, userId: number) {
     const user = await this.userRepository.findOne(userId, {
       relations: ['quote'],
     });
@@ -108,12 +132,31 @@ export class UserService {
       throw new BadRequestException('User does not have a quote');
     }
 
+    //najdemo quote in dodamo -1
     const quote = await this.quoteRepository.findOne({
       id: user.quote_id,
     });
     quote.votes = quote.votes - 1;
-    const newValue = await this.quoteRepository.save(quote);
 
+    //pogledamo če je prijavljen uporabnik že glasoval ne temu quotu
+    //state=1 => upvote / state=2 => downvote / state=undefined => ni se oddal glasu
+    const state = await this.voteRepository.findOne({ id: loggedInUserId });
+    if (!state) {
+      //uporabnik še ni glasoval
+      state.user_id = loggedInUserId;
+      state.state = 2;
+      state.quote = quote;
+    } else if (state.state === 2) {
+      //uporabnik je že upvotu
+      throw new BadRequestException('You have already voted on this quote');
+    } else if (state.state === 1) {
+      //uporabnik je upvotu in sedaj želi downvotat
+      state.user_id = loggedInUserId;
+      state.state = 2;
+      state.quote = quote;
+    }
+    await this.voteRepository.save(state);
+    const newValue = await this.quoteRepository.save(quote);
     return newValue.votes;
   }
 

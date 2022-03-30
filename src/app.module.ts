@@ -11,6 +11,7 @@ import { ConfigModule } from '@nestjs/config';
 import { UserController } from './user/user.controller';
 import { UserService } from './user/user.service';
 import { UserModule } from './user/user.module';
+import { Vote } from './Entity/vote.entity';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { UserModule } from './user/user.module';
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DATABASE,
       autoLoadEntities: true,
-      entities: [User, Quote],
+      entities: [User, Quote, Vote],
       synchronize: true,
     }),
     AuthModule,

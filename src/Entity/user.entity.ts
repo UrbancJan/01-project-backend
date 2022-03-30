@@ -9,6 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Quote } from './quote.entity';
+import { Vote } from './vote.entity';
 
 @Entity({ name: 'users' }) //ime tabele v bazi
 export class User {

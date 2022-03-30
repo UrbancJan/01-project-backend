@@ -5,8 +5,10 @@ import {
   OneToMany,
   ManyToMany,
   OneToOne,
+  JoinColumn,
 } from 'typeorm';
 import { User } from './user.entity';
+import { Vote } from './vote.entity';
 
 @Entity({ name: 'quotes' }) //ime tabele v bazi
 export class Quote {
@@ -21,4 +23,7 @@ export class Quote {
 
   @OneToOne(() => User, (user) => user.quote)
   user: User;
+
+  @OneToMany(() => Vote, (vote) => vote.quote)
+  vote: Vote;
 }
