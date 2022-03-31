@@ -19,12 +19,23 @@ export class Vote {
   id: number;
 
   @Column()
-  user_id: number;
-
-  @Column()
   state: number;
+
+  @Column({
+    nullable: true,
+  })
+  quote_id: number;
+
+  @Column({
+    nullable: true,
+  })
+  user_id: number;
 
   @ManyToOne(() => Quote, (quote) => quote.vote)
   @JoinColumn({ name: 'quote_id' })
   quote: Quote;
+
+  @ManyToOne(() => User, (user) => user.vote)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 }

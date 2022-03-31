@@ -58,4 +58,11 @@ export class UserController {
   list() {
     return this.userService.list();
   }
+
+  @UseGuards(jwtAuthGuard)
+  @Get('/liked')
+  getLikedQuotes(@Req() request) {
+    const data = this.userService.liked(request.user.id);
+    return data;
+  }
 }

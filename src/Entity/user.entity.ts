@@ -36,4 +36,7 @@ export class User {
   @OneToOne(() => Quote, (quote) => quote.user)
   @JoinColumn({ name: 'quote_id' })
   quote: Quote;
+
+  @OneToMany(() => Vote, (vote) => vote.user)
+  vote: Vote;
 }
