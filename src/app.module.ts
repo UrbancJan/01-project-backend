@@ -12,6 +12,7 @@ import { UserController } from './user/user.controller';
 import { UserService } from './user/user.service';
 import { UserModule } from './user/user.module';
 import { Vote } from './Entity/vote.entity';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { Vote } from './Entity/vote.entity';
     }),
     AuthModule,
     UserModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],

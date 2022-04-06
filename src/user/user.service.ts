@@ -1,16 +1,19 @@
 import {
   BadRequestException,
   Injectable,
+  NotAcceptableException,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NewPasswordDto } from 'src/dto/new-password.dto';
 import { NewQuoteDto } from 'src/dto/new-quote.dto';
 import { Quote } from 'src/Entity/quote.entity';
 import { User } from 'src/Entity/user.entity';
-import { IsNull, Repository } from 'typeorm';
+import { createQueryBuilder, IsNull, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Vote } from 'src/Entity/vote.entity';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class UserService {
@@ -21,18 +24,17 @@ export class UserService {
     @InjectRepository(Vote) private readonly voteRepository: Repository<Vote>,
   ) {}
 
-  async me(userId: number): Promise<any> {
-    const user = await this.userRepository.findOne({ id: userId });
-
-    //iz objekta odstranimo geslo da ne vračamo gesla uporabniku na client
-    const { password, ...result } = user;
+  async me(userId: number): Promise<User> {
+    const user = await this.userRepository.findOne(userId, {
+      relations: ['quote'],
+    });
 
     //pogledamo če uporabnik obstaja
     if (!user) {
       throw new NotFoundException('User does not exist');
     }
 
-    return result;
+    return user;
   }
 
   async createUpdateQuote(payload: NewQuoteDto, userId: number): Promise<User> {
@@ -201,6 +203,11 @@ export class UserService {
       );
     }
 
+    //pogledamo če se gesli ujemata
+    if (!(newPassword.password === newPassword.confirmPassword)) {
+      throw new UnprocessableEntityException('Passwords do not match!');
+    }
+
     const saltOrRounds = 10;
     const hashedPassword = await bcrypt.hash(
       newPassword.password,
@@ -240,13 +247,50 @@ export class UserService {
     return user;
   }
 
-  async liked(userId: number) {
-    const selectQuery =
-      'select u.id as op_user_id, u.name as name, u.lastname as lastname, q.id as quote_id, q.content as content from votes v inner join quotes q on v.quote_id=q.id inner join users u on q.id=u.quote_id where v.user_id=' +
+  async liked(userId: number): Promise<User[]> {
+    //todo najdi samo tiste kjer je glasoval z upvotu
+    /*const selectQuery =
+      'select u.id as op_user_id, u.name as name, u.lastname as lastname, q.id as quote_id, q.content as content, v.state as state from votes v inner join quotes q on v.quote_id=q.id inner join users u on q.id=u.quote_id where v.user_id=' +
       userId +
-      ';';
-    const result = await this.quoteRepository.query(selectQuery);
-    console.log(result);
-    return null;
+      'and v.state=1;';*/
+
+    /*const selectQuery =
+      'select u.*, q.* from votes v inner join quotes q on v.quote_id=q.id inner join users u on q.id=u.quote_id where v.user_id=' +
+      userId +
+      'and v.state=1;';*/
+
+    const data = await this.userRepository
+      .createQueryBuilder('u')
+      .innerJoinAndSelect('u.quote', 'q')
+      .innerJoin(Vote, 'v', 'v.quote=q.id')
+      .where('v.user_id=' + userId)
+      .andWhere('v.state = 1') //state = 1 -> upvote
+      .getMany();
+
+    /*const result = await this.quoteRepository.query(selectQuery);
+    if (!result) {
+      throw new NotFoundException('User does not have any liked quotes!');
+    }
+    */
+    console.log(data);
+    /*var data = Array.from(result);
+    console.log(data);*/
+
+    return data;
+  }
+
+  async randomQuote(): Promise<User> {
+    const user = await this.userRepository
+      .createQueryBuilder('u')
+      .innerJoinAndSelect('u.quote', 'q')
+      .orderBy('RANDOM()')
+      .limit(1)
+      .getOne();
+
+    if (!user) {
+      throw new NotFoundException('User does not exist');
+    }
+
+    return user;
   }
 }

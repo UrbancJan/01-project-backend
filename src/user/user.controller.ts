@@ -65,4 +65,10 @@ export class UserController {
     const data = this.userService.liked(request.user.id);
     return data;
   }
+
+  @Get('random-quote')
+  randomQuote() {
+    const data = this.userService.randomQuote();
+    return data;
+  }
 }

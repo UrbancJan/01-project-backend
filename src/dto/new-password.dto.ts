@@ -3,4 +3,8 @@ export class NewPasswordDto {
   @IsNotEmpty()
   @IsString()
   password: string;
+
+  @IsNotEmpty()
+  @IsString()
+  confirmPassword: string;
 }
