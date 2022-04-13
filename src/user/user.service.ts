@@ -66,9 +66,19 @@ export class UserService {
     });
   }
 
-  async upvote(loggedInUserId: number, userId: number): Promise<Number> {
-    const user = await this.userRepository.findOne(userId, {
+  async upvote(loggedInUserId: number, userId: number): Promise<any> {
+    //interface za objekte, ki jih bomo vračali
+    interface returnObject {
+      votes?: number;
+      state?: number;
+    }
+
+    var holdState;
+    /*const user = await this.userRepository.findOne(userId, {
       relations: ['quote'],
+    });*/
+    const user = await this.userRepository.findOne({
+      where: { quote_id: userId },
     });
 
     //pogledamo če uporabnik obstaja
@@ -81,58 +91,69 @@ export class UserService {
       throw new BadRequestException('User does not have a quote');
     }
 
-    //najdemo quote in dodamo +1
+    //najdemo quote
     const quote = await this.quoteRepository.findOne({
       id: user.quote_id,
     });
-    quote.votes = quote.votes + 1;
 
     //pogledamo če je prijavljen uporabnik že glasoval ne temu quotu
     //state=1 => upvote / state=2 => downvote / state=undefined => ni se oddal glasu
-    //const vote = new Vote();
-    //const state = await this.voteRepository.findOne({ id: loggedInUserId });
     const state = await this.voteRepository.findOne({
       where: { user_id: loggedInUserId, quote_id: quote.id },
     });
 
     //najdemo logged in user info
     const loggedInUser = await this.userRepository.findOne(loggedInUserId);
-
     if (!state) {
-      //uporabnik še ni glasoval
-      //state.user_id = loggedInUserId;
+      quote.votes = quote.votes + 1;
       const newVote = new Vote();
       newVote.state = 1;
       newVote.quote = quote;
       newVote.user = loggedInUser;
+      holdState = 1;
       await this.voteRepository.save(newVote);
     } else if (state.state === 1) {
-      //uporabnik je že upvotu
-      throw new BadRequestException('You have already voted on this quote');
+      //če uporabnik upvota že upvotan quote se vote odstrani
+      quote.votes = quote.votes - 1;
+      state.state = 0;
+      holdState = 0;
+      await this.voteRepository.save(state);
+    } else if (state.state === 0) {
+      //uporabnik je že upvotu ampak je upvote odstranil in želi ponovno upvotat
+      quote.votes = quote.votes + 1;
+      state.state = 1;
+      holdState = 1;
+      await this.voteRepository.save(state);
     } else if (state.state === 2) {
       //uporabnik je downvotu in sedaj želi upvotat
-      //state.user_id = loggedInUserId;
       state.state = 1;
       state.quote = quote;
       state.user = loggedInUser;
+      quote.votes = quote.votes + 2;
+      holdState = 1;
       await this.voteRepository.save(state);
     }
-
     const newValue = await this.quoteRepository.save(quote);
-    return newValue.votes;
 
-    /* const upvoteQuery =
-      'Update quotes set votes = votes + 1 where id=(select users.quote_id from users where id=' +
-      id +
-      ') returning quotes.votes';
+    var returnValue: returnObject = {
+      votes: newValue.votes,
+      state: holdState,
+    };
 
-    const votes = await this.quoteRepository.query(upvoteQuery);
-    return votes[0][0].votes;*/
+    return returnValue;
+    //return newValue.votes;
   }
 
-  async downvote(loggedInUserId: number, userId: number) {
-    const user = await this.userRepository.findOne(userId, {
-      relations: ['quote'],
+  async downvote(loggedInUserId: number, userId: number): Promise<any> {
+    //interface za objekte, ki jih bomo vračali
+    interface returnObject {
+      votes?: number;
+      state?: number;
+    }
+
+    var holdState;
+    const user = await this.userRepository.findOne({
+      where: { quote_id: userId },
     });
 
     //pogledamo če uporabnik obstaja
@@ -145,16 +166,13 @@ export class UserService {
       throw new BadRequestException('User does not have a quote');
     }
 
-    //najdemo quote in dodamo - 1
+    //najdemo quote
     const quote = await this.quoteRepository.findOne({
       id: user.quote_id,
     });
-    quote.votes = quote.votes - 1;
 
     //pogledamo če je prijavljen uporabnik že glasoval ne temu quotu
     //state=1 => upvote / state=2 => downvote / state=undefined => ni se oddal glasu
-    //const vote = new Vote();
-    //const state = await this.voteRepository.findOne({ id: loggedInUserId });
     const state = await this.voteRepository.findOne({
       where: { user_id: loggedInUserId, quote_id: quote.id },
     });
@@ -163,27 +181,43 @@ export class UserService {
     const loggedInUser = await this.userRepository.findOne(loggedInUserId);
 
     if (!state) {
-      //uporabnik še ni glasoval
-      //state.user_id = loggedInUserId;
+      quote.votes = quote.votes - 1;
       const newVote = new Vote();
       newVote.state = 2;
       newVote.quote = quote;
       newVote.user = loggedInUser;
+      holdState = 2;
       await this.voteRepository.save(newVote);
     } else if (state.state === 2) {
-      //uporabnik je že downvotu
-      throw new BadRequestException('You have already voted on this quote');
+      //če uporabnik dovnwota že downvotan quote se vote odstrani
+      quote.votes = quote.votes + 1;
+      state.state = 0;
+      holdState = 0;
+      await this.voteRepository.save(state);
+    } else if (state.state === 0) {
+      //uporabnik je že downvotu ampak je dovnwote odstranil in želi ponovno dovnwotat
+      quote.votes = quote.votes - 1;
+      state.state = 2;
+      holdState = 2;
+      await this.voteRepository.save(state);
     } else if (state.state === 1) {
       //uporabnik je upvotu in sedaj želi downvotat
-      //state.user_id = loggedInUserId;
       state.state = 2;
       state.quote = quote;
       state.user = loggedInUser;
+      quote.votes = quote.votes - 2;
+      holdState = 2;
       await this.voteRepository.save(state);
     }
 
     const newValue = await this.quoteRepository.save(quote);
-    return newValue.votes;
+    var returnValue: returnObject = {
+      votes: newValue.votes,
+      state: holdState,
+    };
+
+    return returnValue;
+    //return newValue.votes;
   }
 
   async updatePassword(
@@ -247,6 +281,7 @@ export class UserService {
     return user;
   }
 
+  //todo popravi da se id pošlje v url zato da dobim liked posts od drugih userjev ne samo od trenutno prijavljenega
   async liked(userId: number): Promise<User[]> {
     //todo najdi samo tiste kjer je glasoval z upvotu
     /*const selectQuery =
@@ -272,7 +307,7 @@ export class UserService {
       throw new NotFoundException('User does not have any liked quotes!');
     }
     */
-    console.log(data);
+    //console.log(data);
     /*var data = Array.from(result);
     console.log(data);*/
 

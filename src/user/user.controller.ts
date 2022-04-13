@@ -60,9 +60,9 @@ export class UserController {
   }
 
   @UseGuards(jwtAuthGuard)
-  @Get('/liked')
-  getLikedQuotes(@Req() request) {
-    const data = this.userService.liked(request.user.id);
+  @Get('/liked/:id')
+  getLikedQuotes(@Param('id') id: number) {
+    const data = this.userService.liked(id);
     return data;
   }
 

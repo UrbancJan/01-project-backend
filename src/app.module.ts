@@ -30,7 +30,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     }),
     AuthModule,
     UserModule,
-    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],
