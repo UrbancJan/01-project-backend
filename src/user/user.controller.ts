@@ -44,8 +44,11 @@ export class UserController {
 
   @UseGuards(jwtAuthGuard)
   @Put('me/update-password')
-  updatePassword(@Req() request, @Body() newPassword: NewPasswordDto) {
-    const data = this.userService.updatePassword(request.user.id, newPassword);
+  async updatePassword(@Req() request, @Body() newPassword: NewPasswordDto) {
+    const data = await this.userService.updatePassword(
+      request.user.id,
+      newPassword,
+    );
     return data;
   }
 
